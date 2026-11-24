@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="1"
+    findUnusedCode="false"
+    resolveFromConfigFile="true"
+    findUnusedIssueHandlerSuppression="false"
+>
+    <projectFiles>
+        <directory name="src"/>
+        <ignoreFiles>
+            <directory name="vendor"/>
+        </ignoreFiles>
+    </projectFiles>
+    <issueHandlers>
+        <!-- Symfony 8.1 deprecates HttpKernel's BundleInterface in favour of an
+             interface 7.4 does not have; 7.4 is supported, so it stays. -->
+        <DeprecatedInterface>
+            <errorLevel type="suppress">
+                <file name="src/RasuvaeffMcpBundle.php"/>
+            </errorLevel>
+        </DeprecatedInterface>
+    </issueHandlers>
+</psalm>
