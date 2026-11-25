@@ -104,6 +104,27 @@ public function metadata(Request $request, ProtectedResourceMetadataHandler $han
 Code outside MCP announces a change of a resource through the `ResourceUpdateNotifier` service
 (needs `notifications.bus`).
 
+### Several nodes
+
+Stateless calls need nothing. For sessions define a shared store; notifications and the call budget
+follow the cache of the application, so point it at Redis:
+
+```yaml
+# config/services.yaml
+services:
+    Mcp\Server\Session\SessionStoreInterface:
+        class: Mcp\Server\Session\Psr6SessionStore
+        arguments: ['@cache.app']
+```
+
+The call budget counts over PSR-16, which has no atomic increment: calls sent at the same moment
+may all pass. It stops a loop, it is not a quota.
+
+A Symfony cache pool hides the failure of its backend: while Redis is down the budget does not count.
+
+Keycloak puts your endpoint in `aud` only through an audience mapper on the client; without it
+every token is refused with 401.
+
 ### Long-running workers
 
 - Classes named in the options are registered autowired and private; a service of yours with the same id wins.

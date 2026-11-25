@@ -6,6 +6,7 @@ namespace Rasuvaeff\SymfonyMcp\Tests;
 
 use Mcp\Server\Resource\SubscriptionManagerInterface;
 use Mcp\Server\Server;
+use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\SessionStoreInterface;
 use Mcp\Server\Subscription\InMemoryNotificationBus;
 use Mcp\Server\Subscription\NotificationBusInterface;
@@ -13,6 +14,7 @@ use Mcp\Server\Subscription\Psr16NotificationBus;
 use Mcp\Server\Subscription\Psr6NotificationBus;
 use Mcp\Server\Transport\Http\OAuth\ProtectedResourceMetadataHandler;
 use Nyholm\Psr7\ServerRequest;
+use Rasuvaeff\Mcp\Configuration\ServerOptions;
 use Rasuvaeff\Mcp\Resource\ResourceUpdateNotifier;
 use Rasuvaeff\SymfonyMcp\Configuration;
 use Rasuvaeff\SymfonyMcp\Guard;
@@ -31,6 +33,7 @@ use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Tester\ApplicationTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Uid\Uuid;
 use Testo\Assert;
 use Testo\Codecov\Covers;
 use Testo\Data\DataProvider;
@@ -202,15 +205,36 @@ final class RasuvaeffMcpExtensionTest
         $container = new ContainerBuilder();
         (new RasuvaeffMcpExtension())->load([['notifications' => ['bus' => 'memory']]], $container);
 
-        foreach ([Server::class => 'server', SessionStoreInterface::class => 'sessionStore', ProtectedResourceMetadataHandler::class => 'oauthMetadataHandler', NotificationBusInterface::class => 'notificationBus'] as $id => $method) {
+        foreach ([Server::class => [McpRuntime::class, 'server'], ProtectedResourceMetadataHandler::class => [McpRuntime::class, 'oauthMetadataHandler'], SessionStoreInterface::class => [ServerOptions::class, 'sessionStore'], NotificationBusInterface::class => [ServerOptions::class, 'notificationBus']] as $id => [$service, $method]) {
             $factory = $container->getDefinition($id)->getFactory();
-            Assert::same((string) $factory[0], McpRuntime::class);
+            Assert::same((string) $factory[0], $service);
             Assert::same($factory[1], $method);
         }
 
         Assert::false($container->getDefinition(Server::class)->isShared());
         Assert::true($container->getDefinition(NotificationBusInterface::class)->isShared());
         Assert::instanceOf($runtime->oauthMetadataHandler(), ProtectedResourceMetadataHandler::class);
+    }
+
+    public function aSessionStoreAndABusOfTheApplicationWin(): void
+    {
+        $application = SymfonyApplication::start(
+            ['client_secrets' => ['client' => 'secret'], 'notifications' => ['bus' => 'psr16']],
+            [SessionStoreInterface::class => InMemorySessionStore::class, NotificationBusInterface::class => InMemoryNotificationBus::class],
+        );
+        $runtime = $this->runtime($application);
+
+        Assert::instanceOf($runtime->sessionStore(), InMemorySessionStore::class);
+        Assert::instanceOf($runtime->notificationBus(), InMemoryNotificationBus::class);
+        Assert::same($runtime->sessionStore(), $application->getContainer()->get(SessionStoreInterface::class));
+
+        $response = $this->initialize($application, 'secret', 'localhost');
+        Assert::true($runtime->sessionStore()->exists(Uuid::fromString($response->getHeaderLine('Mcp-Session-Id'))));
+    }
+
+    public function withoutABusThereIsNone(): void
+    {
+        Assert::null($this->runtime($this->start())->notificationBus());
     }
 
     public function onlyAllowedHostsAreServed(): void

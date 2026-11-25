@@ -37,10 +37,6 @@ final class McpRuntime implements ResetInterface
 
     private ?Server $server = null;
 
-    private ?SessionStoreInterface $sessionStore = null;
-
-    private ?NotificationBusInterface $notificationBus = null;
-
     /**
      * @param ContainerInterface $container locator of the classes named in the options
      * @param array<string, mixed> $params
@@ -60,12 +56,18 @@ final class McpRuntime implements ResetInterface
 
     public function sessionStore(): SessionStoreInterface
     {
-        return $this->sessionStore ??= $this->options()->sessionStore();
+        /** @var SessionStoreInterface */
+        return $this->container->get(SessionStoreInterface::class);
     }
 
     public function notificationBus(): ?NotificationBusInterface
     {
-        return $this->notificationBus ??= $this->options()->notificationBus($this->container);
+        if (!$this->container->has(NotificationBusInterface::class)) {
+            return null;
+        }
+
+        /** @var NotificationBusInterface */
+        return $this->container->get(NotificationBusInterface::class);
     }
 
     public function server(): Server

@@ -103,6 +103,27 @@ public function metadata(Request $request, ProtectedResourceMetadataHandler $han
 Код вне MCP объявляет об изменении ресурса через сервис `ResourceUpdateNotifier`
 (нужна `notifications.bus`).
 
+### Несколько узлов
+
+Вызовам без сессии ничего не нужно. Для сессий объявите общее хранилище; уведомления и лимит
+вызовов работают через кеш приложения, направьте его в Redis:
+
+```yaml
+# config/services.yaml
+services:
+    Mcp\Server\Session\SessionStoreInterface:
+        class: Mcp\Server\Session\Psr6SessionStore
+        arguments: ['@cache.app']
+```
+
+Лимит вызовов считается через PSR-16, где нет атомарного инкремента: одновременные вызовы могут
+пройти все. Он останавливает цикл, но это не квота.
+
+Пул кеша Symfony скрывает отказ хранилища: пока Redis недоступен, лимит не считается.
+
+Keycloak добавляет ваш эндпоинт в `aud` только через audience mapper клиента; без него любой
+токен получит 401.
+
 ### Долгоживущие воркеры
 
 - Классы из настроек регистрируются приватными с автосвязыванием; ваш сервис с тем же id важнее.

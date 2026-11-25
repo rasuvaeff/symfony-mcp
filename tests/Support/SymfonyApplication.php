@@ -29,7 +29,7 @@ final class SymfonyApplication extends Kernel
 
     /**
      * @param array<string, mixed> $config
-     * @param list<class-string> $services registered by the application
+     * @param array<array-key, class-string> $services registered by the application, by id or under the class name
      */
     public function __construct(private readonly array $config = [], private readonly array $services = [])
     {
@@ -40,7 +40,7 @@ final class SymfonyApplication extends Kernel
 
     /**
      * @param array<string, mixed> $config
-     * @param list<class-string> $services
+     * @param array<array-key, class-string> $services
      */
     public static function start(array $config = [], array $services = []): self
     {
@@ -87,7 +87,13 @@ final class SymfonyApplication extends Kernel
         // the default logger writes to STDERR, which aborts a mutation run
         $services->set('logger', NullLogger::class);
 
-        foreach ($this->services as $service) {
+        foreach ($this->services as $id => $service) {
+            if (\is_string($id)) {
+                $services->set($id, $service)->public();
+
+                continue;
+            }
+
             $services->set($service);
         }
     }

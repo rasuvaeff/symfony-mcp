@@ -20,6 +20,7 @@ use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
+use Rasuvaeff\Mcp\Configuration\ServerOptions;
 use Rasuvaeff\Mcp\McpListCommand;
 use Rasuvaeff\Mcp\McpServeCommand;
 use Rasuvaeff\Mcp\Resource\ResourceUpdateNotifier;
@@ -77,11 +78,18 @@ final class RasuvaeffMcpExtension extends Extension
         $references[ClientInterface::class] = new Reference(ClientInterface::class, ContainerInterface::IGNORE_ON_INVALID_REFERENCE);
         $references[LoggerInterface::class] = new Reference(LoggerInterface::class, ContainerInterface::IGNORE_ON_INVALID_REFERENCE);
 
+        // a service of the application with one of these ids wins
+        $references[SessionStoreInterface::class] = new Reference(SessionStoreInterface::class);
+        $references[NotificationBusInterface::class] = new Reference(NotificationBusInterface::class, ContainerInterface::IGNORE_ON_INVALID_REFERENCE);
+        $locator = ServiceLocatorTagPass::register($container, $references);
+        $container->setDefinition(ServerOptions::class, (new Definition(ServerOptions::class))->setFactory([ServerOptions::class, 'fromParams'])->setArguments([$config]));
+        $container->setDefinition(SessionStoreInterface::class, (new Definition(SessionStoreInterface::class))->setFactory([new Reference(ServerOptions::class), 'sessionStore']));
+
         $container->setDefinition(SessionSubscriptionManager::class, new Definition(SessionSubscriptionManager::class));
         $container->setAlias(SubscriptionManagerInterface::class, SessionSubscriptionManager::class);
         $container->setDefinition(McpRuntime::class, (new Definition(McpRuntime::class))
             ->setArguments([
-                ServiceLocatorTagPass::register($container, $references),
+                $locator,
                 $config,
                 new Reference(SubscriptionManagerInterface::class),
                 new Reference(LoggerInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE),
@@ -90,13 +98,15 @@ final class RasuvaeffMcpExtension extends Extension
             ->addTag('kernel.reset', ['method' => 'reset']));
 
         // not shared: they follow the runtime, which a worker resets between requests
-        foreach ([Server::class => 'server', SessionStoreInterface::class => 'sessionStore', ProtectedResourceMetadataHandler::class => 'oauthMetadataHandler'] as $id => $method) {
+        foreach ([Server::class => 'server', ProtectedResourceMetadataHandler::class => 'oauthMetadataHandler'] as $id => $method) {
             $container->setDefinition($id, (new Definition($id))->setFactory([new Reference(McpRuntime::class), $method])->setShared(shared: false));
         }
 
         // an application without a bus has no such service: ResourceUpdateNotifier takes it as optional
         if (($config['notifications']['bus'] ?? '') !== '') {
-            $container->setDefinition(NotificationBusInterface::class, (new Definition(NotificationBusInterface::class))->setFactory([new Reference(McpRuntime::class), 'notificationBus']));
+            $container->setDefinition(NotificationBusInterface::class, (new Definition(NotificationBusInterface::class))
+                ->setFactory([new Reference(ServerOptions::class), 'notificationBus'])
+                ->setArguments([$locator]));
         }
 
         $container->setDefinition(ResourceUpdateNotifier::class, (new Definition(ResourceUpdateNotifier::class))->setArguments([
