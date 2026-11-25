@@ -98,7 +98,7 @@ services:
 The call budget counts over PSR-16, which has no atomic increment: calls sent at the same moment
 may all pass. It stops a loop, it is not a quota.
 
-A Symfony cache pool hides the failure of its backend: while Redis is down the budget does not count.
+A Symfony cache pool hides the failure of its backend: while Redis is down, `set()` returns `false` instead of throwing. The server reads that as a failed write and rejects the call: a store that is down fails closed instead of lifting the budget.
 
 Keycloak puts your endpoint in `aud` only through an audience mapper on the client; without it
 every token is refused with 401.
