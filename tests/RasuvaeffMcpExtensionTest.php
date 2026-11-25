@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\SymfonyMcp\Tests;
 
+use Mcp\Server\Resource\SubscriptionManagerInterface;
 use Mcp\Server\Server;
 use Mcp\Server\Session\SessionStoreInterface;
 use Mcp\Server\Subscription\InMemoryNotificationBus;
@@ -12,6 +13,7 @@ use Mcp\Server\Subscription\Psr16NotificationBus;
 use Mcp\Server\Subscription\Psr6NotificationBus;
 use Mcp\Server\Transport\Http\OAuth\ProtectedResourceMetadataHandler;
 use Nyholm\Psr7\ServerRequest;
+use Rasuvaeff\Mcp\Resource\ResourceUpdateNotifier;
 use Rasuvaeff\SymfonyMcp\Configuration;
 use Rasuvaeff\SymfonyMcp\Guard;
 use Rasuvaeff\SymfonyMcp\McpController;
@@ -22,6 +24,7 @@ use Rasuvaeff\SymfonyMcp\ServiceClasses;
 use Rasuvaeff\SymfonyMcp\Tests\Support\ClockTool;
 use Rasuvaeff\SymfonyMcp\Tests\Support\FixedInterceptor;
 use Rasuvaeff\SymfonyMcp\Tests\Support\NotFoundHandler;
+use Rasuvaeff\SymfonyMcp\Tests\Support\NotifyingService;
 use Rasuvaeff\SymfonyMcp\Tests\Support\SymfonyApplication;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Config\Definition\Processor;
@@ -180,6 +183,16 @@ final class RasuvaeffMcpExtensionTest
         yield 'memory' => ['memory', InMemoryNotificationBus::class];
         yield 'psr16' => ['psr16', Psr16NotificationBus::class];
         yield 'psr6' => ['psr6', Psr6NotificationBus::class];
+    }
+
+    public function theNotifierPublishesToTheBusOfTheServer(): void
+    {
+        foreach (['memory' => true, '' => false] as $kind => $hasBus) {
+            $application = SymfonyApplication::start(['notifications' => ['bus' => $kind]], [NotifyingService::class]);
+            $container = $application->getContainer()->get('test.service_container');
+
+            Assert::equals($container->get(NotifyingService::class)->notifier, new ResourceUpdateNotifier($container->get(SubscriptionManagerInterface::class), $hasBus ? $this->runtime($application)->notificationBus() : null));
+        }
     }
 
     public function theServicesComeFromTheRuntime(): void

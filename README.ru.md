@@ -87,12 +87,28 @@ bin/console mcp:serve   # stdio, for a local agent
 и `notifications.bus`. Следующий файл конфигурации заменяет ключ верхнего уровня целиком.
 
 `ProtectedResourceMetadataHandler` (сервис) отдайте своим маршрутом по адресу
-`/.well-known/oauth-protected-resource/<path>`.
+`/.well-known/oauth-protected-resource/<path>`:
+
+```php
+#[Route('/.well-known/oauth-protected-resource/mcp', methods: 'GET')]
+public function metadata(Request $request, ProtectedResourceMetadataHandler $handler): Response
+{
+    $factory = new Psr17Factory();
+    $psr = (new PsrHttpFactory($factory, $factory, $factory, $factory))->createRequest($request);
+
+    return (new HttpFoundationFactory())->createResponse($handler->handle($psr));
+}
+```
+
+Код вне MCP объявляет об изменении ресурса через сервис `ResourceUpdateNotifier`
+(нужна `notifications.bus`).
 
 ### Долгоживущие воркеры
 
 - Классы из настроек регистрируются приватными с автосвязыванием; ваш сервис с тем же id важнее.
 - Сервер сбрасывается через `kernel.reset` между запросами воркера. Сессии на диске и шина уведомлений остаются.
+- Объект инструмента — обычный сервис и живёт между запросами воркера: его поля увидит следующий клиент. Не храните в них состояние запроса или реализуйте `ResetInterface`.
+- Не исключайте класс инструмента через `exclude:` в `services.yaml`: контейнер не соберётся («reference to an abstract definition»).
 - Алиас настроек — `rasuvaeff_mcp`: `mcp` занят `symfony/mcp-bundle`.
 
 ### Компоненты

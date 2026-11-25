@@ -88,12 +88,28 @@ first built, not when the container is compiled, so `%env()%` works everywhere e
 class names and `notifications.bus`. A later config file replaces a top-level key as a whole.
 
 Serve `ProtectedResourceMetadataHandler` (a service) from a route of your own at
-`/.well-known/oauth-protected-resource/<path>`.
+`/.well-known/oauth-protected-resource/<path>`:
+
+```php
+#[Route('/.well-known/oauth-protected-resource/mcp', methods: 'GET')]
+public function metadata(Request $request, ProtectedResourceMetadataHandler $handler): Response
+{
+    $factory = new Psr17Factory();
+    $psr = (new PsrHttpFactory($factory, $factory, $factory, $factory))->createRequest($request);
+
+    return (new HttpFoundationFactory())->createResponse($handler->handle($psr));
+}
+```
+
+Code outside MCP announces a change of a resource through the `ResourceUpdateNotifier` service
+(needs `notifications.bus`).
 
 ### Long-running workers
 
 - Classes named in the options are registered autowired and private; a service of yours with the same id wins.
 - The server is dropped by `kernel.reset` between requests of a worker. Sessions on disk and the notification bus stay.
+- A tool object is an ordinary service and lives across the requests of a worker: its properties are seen by the next client. Keep no request state in them, or implement `ResetInterface`.
+- Do not `exclude:` a tool class in `services.yaml`: the container does not compile ("reference to an abstract definition").
 - The option alias is `rasuvaeff_mcp`: `mcp` belongs to `symfony/mcp-bundle`.
 
 ### Components

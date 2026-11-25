@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 use Rasuvaeff\Mcp\McpListCommand;
 use Rasuvaeff\Mcp\McpServeCommand;
+use Rasuvaeff\Mcp\Resource\ResourceUpdateNotifier;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -97,6 +98,11 @@ final class RasuvaeffMcpExtension extends Extension
         if (($config['notifications']['bus'] ?? '') !== '') {
             $container->setDefinition(NotificationBusInterface::class, (new Definition(NotificationBusInterface::class))->setFactory([new Reference(McpRuntime::class), 'notificationBus']));
         }
+
+        $container->setDefinition(ResourceUpdateNotifier::class, (new Definition(ResourceUpdateNotifier::class))->setArguments([
+            new Reference(SubscriptionManagerInterface::class),
+            new Reference(NotificationBusInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE),
+        ]));
 
         $container->setDefinition(McpController::class, (new Definition(McpController::class))
             ->setArguments([new Reference(McpRuntime::class)])
