@@ -11,6 +11,8 @@ and `rasuvaeff/mcp-openapi`. Protocol attributes come from `mcp/sdk`. Symfony 7.
 - Set `allowed_hosts` in production; only localhost is allowed without it.
 - Tools are ordinary services, resolved through the container; never instantiate them.
 - Keep no request state in a tool's properties: a worker serves many requests.
+- Checked on FrankenPHP (classic and worker), Swoole and RoadRunner. Under RoadRunner a `subscriptions/listen` stream arrives in one piece when it ends: the PSR-7 bridge captures the whole body. Keep `notifications.subscription_lifetime` short there, or serve listen streams from another runtime.
+- `guard` other than `secret` or `oauth`, an empty one included, fails with `Unknown MCP guard`.
 - Option keys are those of `rasuvaeff/yii3-mcp`: read `vendor/rasuvaeff/mcp/llms.txt` before guessing one.
 
 ## Setup
@@ -102,6 +104,8 @@ A Symfony cache pool hides the failure of its backend: while Redis is down, `set
 
 Keycloak puts your endpoint in `aud` only through an audience mapper on the client; without it
 every token is refused with 401.
+
+While the session store is unavailable, `initialize` still answers with a session id: the SDK logs the failed save, and the next request with that id gets 404, after which the client opens a new session.
 
 ## API
 

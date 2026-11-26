@@ -7,3 +7,5 @@
 - `ResourceUpdateNotifier` is a service.
 - A `SessionStoreInterface` or `NotificationBusInterface` service of the application replaces the default.
 - Requires `rasuvaeff/mcp` `^0.1.3`: while the backend of the cache pool is down, `set()` returns `false` and the server rejects the call instead of lifting the budget.
+- An unknown or empty `guard` fails with `Unknown MCP guard` instead of a `ValueError`.
+- Documented: Swoole and RoadRunner checked; under RoadRunner a listen stream arrives when it ends.

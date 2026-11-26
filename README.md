@@ -125,8 +125,12 @@ A Symfony cache pool hides the failure of its backend: while Redis is down, `set
 Keycloak puts your endpoint in `aud` only through an audience mapper on the client; without it
 every token is refused with 401.
 
+While the session store is unavailable, `initialize` still answers with a session id: the SDK logs the failed save, and the next request with that id gets 404, after which the client opens a new session.
+
 ### Long-running workers
 
+- Checked on FrankenPHP (classic and worker), Swoole and RoadRunner. Under RoadRunner a `subscriptions/listen` stream arrives in one piece when it ends: the PSR-7 bridge captures the whole body. Keep `notifications.subscription_lifetime` short there, or serve listen streams from another runtime.
+- `guard` other than `secret` or `oauth`, an empty one included, fails with `Unknown MCP guard`.
 - Classes named in the options are registered autowired and private; a service of yours with the same id wins.
 - The server is dropped by `kernel.reset` between requests of a worker. Sessions on disk and the notification bus stay.
 - A tool object is an ordinary service and lives across the requests of a worker: its properties are seen by the next client. Keep no request state in them, or implement `ResetInterface`.

@@ -108,7 +108,7 @@ final class McpRuntime implements ResetInterface
 
     public function guard(): MiddlewareInterface
     {
-        return match (Guard::from((string) ($this->params['guard'] ?? Guard::Secret->value))) {
+        return match (Guard::fromConfig($this->params['guard'] ?? Guard::Secret->value)) {
             Guard::Secret => $this->options()->sharedSecretMiddleware(new Psr17Factory()),
             Guard::OAuth => $this->oauth()->bearerTokenMiddleware(),
         };

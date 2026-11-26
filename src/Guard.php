@@ -16,4 +16,15 @@ enum Guard: string
 
     /** OAuth 2.1 resource server, the `oauth` block */
     case OAuth = 'oauth';
+
+    /**
+     * The `guard` value: an empty one (an unset environment variable) is not taken for the default.
+     *
+     * @throws \InvalidArgumentException on any other value
+     */
+    public static function fromConfig(mixed $value): self
+    {
+        return self::tryFrom(\is_string($value) ? $value : '')
+            ?? throw new \InvalidArgumentException(\sprintf('Unknown MCP guard %s: use "secret" or "oauth"', \is_string($value) ? '"' . $value . '"' : get_debug_type($value)));
+    }
 }
