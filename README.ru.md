@@ -27,7 +27,8 @@ Protocol поверх официального [`mcp/sdk`](https://packagist.org
 |---|---|
 | PHP | 8.3 – 8.6 |
 | Symfony | `^7.4 \|\| ^8.0` |
-| `rasuvaeff/mcp`, `rasuvaeff/mcp-openapi` | `^0.1` |
+| `rasuvaeff/mcp` | `^0.1.4` |
+| `rasuvaeff/mcp-openapi` | `^0.1.3` |
 | `firebase/php-jwt` | необязательно, `^7.0`: проверка JWT для OAuth |
 
 ## Установка

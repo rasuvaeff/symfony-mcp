@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-11-26
 
 - Initial package: Symfony integration of `rasuvaeff/mcp` and `rasuvaeff/mcp-openapi`.
 - Agent skill `rasuvaeff-symfony-mcp` in `resources/skills`.
@@ -9,3 +9,4 @@
 - Requires `rasuvaeff/mcp` `^0.1.3`: while the backend of the cache pool is down, `set()` returns `false` and the server rejects the call instead of lifting the budget.
 - An unknown or empty `guard` fails with `Unknown MCP guard` instead of a `ValueError`.
 - Documented: Swoole and RoadRunner checked; under RoadRunner a listen stream arrives when it ends.
+- Requires `rasuvaeff/mcp` `^0.1.4`: a listen stream no longer ends the output buffer of Swoole or of the PSR-7 capture under RoadRunner.
