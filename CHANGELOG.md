@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Docs: the configuration example gives `MCP_SECRET` a default, so an unset variable gets the documented 503, not a 500 from `EnvNotFoundException`.
+
 ## 0.1.0 — 2026-11-26
 
 - Initial package: Symfony integration of `rasuvaeff/mcp` and `rasuvaeff/mcp-openapi`.
