@@ -27,7 +27,7 @@ the container, an HTTP endpoint, console commands, and the
 | Requirement | Version |
 |---|---|
 | PHP | 8.3 – 8.6 |
-| Symfony | `^7.4 \|\| ^8.0` |
+| Symfony | `^7.4 \|\| ^8.0`; some components need a later patch release without security advisories, see `composer.json` |
 | `rasuvaeff/mcp` | `^0.1.4` |
 | `rasuvaeff/mcp-openapi` | `^0.1.3` |
 | `firebase/php-jwt` | optional, `^7.0`: JWT validation for OAuth |

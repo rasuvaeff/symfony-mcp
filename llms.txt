@@ -3,7 +3,7 @@
 Install: `composer require rasuvaeff/symfony-mcp`
 
 Namespace: `Rasuvaeff\SymfonyMcp`. Symfony integration of `rasuvaeff/mcp` (server, interceptors, visibility, OAuth)
-and `rasuvaeff/mcp-openapi`. Protocol attributes come from `mcp/sdk`. Symfony 7.4 or 8, PHP 8.3 – 8.6.
+and `rasuvaeff/mcp-openapi`. Protocol attributes come from `mcp/sdk`. Symfony 7.4 or 8 (patch releases without security advisories, see `composer.json`), PHP 8.3 – 8.6.
 
 ## Rules
 
