@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-11-27
 
 - Requires `symfony/cache` `^7.4.12 || ^8.0.12`, `symfony/config` and `symfony/http-foundation` `^7.4.23 || ^8.1.11`, `symfony/http-kernel` `^7.4.24 || ^8.1.12`: versions with security advisories are no longer allowed.
 - Docs: the configuration example gives `MCP_SECRET` a default, so an unset variable gets the documented 503, not a 500 from `EnvNotFoundException`.
